@@ -48,6 +48,10 @@ android {
     }
 }
 
+val libraryGroupId = project.findProperty("libraryGroupId") as String? ?: "com.mapconductor"
+val libraryArtifactId = "for-openmobilemaps"
+val libraryVersion = project.findProperty("libraryVersion") as String? ?: "1.0.0"
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -74,9 +78,6 @@ dependencies {
     testImplementation(libs.junit)
 }
 
-val libraryGroupId = project.findProperty("libraryGroupId") as String? ?: "com.mapconductor"
-val libraryArtifactId = "for-openmobilemaps"
-val libraryVersion = project.findProperty("libraryVersion") as String? ?: "1.0.0"
 
 // Set project version for NMCP plugin
 version = libraryVersion
