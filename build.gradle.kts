@@ -63,7 +63,13 @@ dependencies {
     // （mapscore の transitive 依存と同じ版。DataLoader が okhttp3.Interceptor を受け取る）
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
 
-    api(project(":android-sdk-compose"))
+    // 集約ビルド（android-sdk）ではプロジェクト参照、単体ビルド（CI のリリース）では
+    // Maven 座標で解決する。他プロバイダと同じ形。
+    if (findProject(":android-sdk-compose") != null) {
+        api(project(":android-sdk-compose"))
+    } else {
+        api("com.mapconductor:compose:$libraryVersion")
+    }
 
     testImplementation(libs.junit)
 }
