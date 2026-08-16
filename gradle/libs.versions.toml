@@ -1,4 +1,5 @@
 [versions]
+composeLibs = "1.7.8"
 openmobilemaps = "4.0.0"
 coroutines = "1.9.0"
 agp = "9.2.1"
@@ -21,9 +22,9 @@ openmobilemaps-mapscore = { module = "io.openmobilemaps:mapscore", version.ref =
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 # Jetpack Compose (with BOM)
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "composeLibs" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "composeLibs" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "composeLibs" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 
 # Lifecycle
@@ -36,8 +37,8 @@ play-services-maps = { module = "com.google.android.gms:play-services-maps", ver
 
 # Sample app
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "composeLibs" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "composeLibs" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }
