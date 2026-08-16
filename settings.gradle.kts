@@ -43,11 +43,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "android-for-openmobilemaps"
 
-if (providers
-        .gradleProperty("skipSampleApp")
-        .map(String::toBoolean)
-        .getOrElse(false)
-        .not()
-) {
-    include(":sample-app")
-}
