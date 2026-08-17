@@ -6,6 +6,14 @@ MapConductor ドライバー。
 ドライバーの**一般的な**書き方は `android-for-template/README.md` にあります。
 ここに書くのは **この SDK 固有の話だけ**です。
 
+## API キー
+
+**不要です。** Open Mobile Maps は設定したスタイルから描画します。スタイルや
+タイルを商用プロバイダから取る場合、キーはスタイル URL 側に載るもので、この
+モジュールが読み取るものではありません。
+
+セットアップ手順: https://mapconductor.com/setup/
+
 ---
 
 ## 1. この SDK の描画モデル
