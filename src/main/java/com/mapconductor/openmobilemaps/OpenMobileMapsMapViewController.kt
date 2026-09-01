@@ -4,6 +4,7 @@ import com.mapconductor.core.controller.BaseMapViewController
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCapabilityStatus
 import com.mapconductor.core.map.MapUISettings
@@ -475,20 +476,20 @@ class OpenMobileMapsMapViewController(
 
     companion object {
         /**
-         * 方位の符号。**SDK は MapConductor と逆回りである。**
+         * 方位の符号。**SDK の `setRotation` は MapConductor の bearing と同じ向き**
+         * （どちらも「地図を時計回りに回す量」）なので、変換は恒等になる。
          *
-         * MapConductor の bearing は Google 準拠で「カメラが向いている方位を北から時計回りに測る」。
-         * SDK の `setRotation` は地図を反時計回りに回す量なので、符号を反転する。
-         * 反転を忘れると bearing 270 の地図が 90 として描かれ、**ちょうど 180 度ずれる**
-         * （tilt ページを MapLibre と並べて気づいた。単独で見ると「回っている」ので正しく見える）。
+         * ここは机上ではなく端末で決めた値である。基準は「MapLibre と並べて同じ向きに
+         * 描かれること」で、MapLibre 側が heading 系（bearing の符号反転）に変わったのに
+         * 合わせてこちらも反転させてある。**符号を触ったら必ず tilt ページを MapLibre と
+         * 並べて確認すること。** 単独で見ると「回っている」ので正しく見えてしまう。
          */
-        internal fun nativeRotationFromBearing(bearing: Double): Float = (-bearing).toFloat()
+        internal fun nativeRotationFromBearing(bearing: Double): Float =
+            CameraBearing.toNativeRotation(bearing).toFloat()
 
         /** SDK の回転角 → MapConductor の bearing（0 以上 360 未満）。 */
-        internal fun bearingFromNativeRotation(rotation: Float): Double {
-            val bearing = -rotation.toDouble() % 360.0
-            return if (bearing < 0) bearing + 360.0 else bearing
-        }
+        internal fun bearingFromNativeRotation(rotation: Float): Double =
+            CameraBearing.bearingFromNativeRotation(rotation.toDouble())
 
         /**
          * ズームの往復換算。
