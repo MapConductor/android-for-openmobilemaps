@@ -56,6 +56,15 @@ class WebMercatorTileLayerConfig(
         t: Int,
         zoom: Int,
     ): String {
+        // 間欠不具合の切り分け用: マーカーレイヤが「初期タイルの後、カメラ移動に
+        // 反応しなくなる」事象を一度観測した（初期 9 枚のあと、パンしても
+        // オンライン復帰しても要求ゼロ。ベースレイヤは要求し続ける）。再発時は
+        //   adb shell setprop log.tag.OmmTileConfig VERBOSE
+        // でこのログを生かし、パン時に getTileUrl が呼ばれるか（ネイティブ層の
+        // カメラ追跡が生きているか）を LocalTileServer のログと突き合わせる。
+        if (android.util.Log.isLoggable("OmmTileConfig", android.util.Log.VERBOSE)) {
+            android.util.Log.v("OmmTileConfig", "getTileUrl layer=$layerName z=$zoom x=$x y=$y")
+        }
         val resolvedY = if (scheme == TileScheme.TMS) (1 shl zoom) - 1 - y else y
         return urlTemplate
             .replace("{z}", zoom.toString())
