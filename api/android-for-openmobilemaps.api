@@ -94,6 +94,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsDesign implemen
   public java.lang.Object getValue();
 }
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsDesign$Companion {
+  public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getNone();
   public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getOpenStreetMap();
   public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getOpenStreetMapJapan();
   public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getOpenTopoMap();

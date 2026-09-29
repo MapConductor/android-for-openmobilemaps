@@ -392,6 +392,12 @@ class OpenMobileMapsMapViewController(
     fun setMapDesignType(value: OpenMobileMapsMapDesignTypeInterface) {
         if (currentDesign?.getValue() == value.getValue()) return
         currentDesign = value
+        // テンプレートが無ければレイヤも無し: 何も描かないデザイン。
+        if (value.tileUrlTemplate.isEmpty()) {
+            layers.setDesignLayer(holder.map, null)
+            mapDesignTypeChangeListener?.invoke(value)
+            return
+        }
         val config =
             WebMercatorTileLayerConfig(
                 layerName = "design-${value.id}",

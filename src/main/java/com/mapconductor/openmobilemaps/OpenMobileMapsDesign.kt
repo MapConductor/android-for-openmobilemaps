@@ -45,6 +45,9 @@ data class OpenMobileMapsDesign(
          */
         private const val OSM_ATTRIBUTION = "© OpenStreetMap contributors"
 
+        /** ベースマップ無し。タイルレイヤを載せないので、アプリが載せたものだけが描かれる。 */
+        val None = OpenMobileMapsDesign(id = "none", tileUrlTemplate = "")
+
         val OpenStreetMap =
             OpenMobileMapsDesign(
                 id = "osm",
