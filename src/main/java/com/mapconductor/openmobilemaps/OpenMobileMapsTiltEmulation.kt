@@ -54,7 +54,9 @@ internal object OpenMobileMapsTiltEmulation {
         val tiltAbsRad = Math.toRadians(tiltAbsDeg)
         val altitude = altitudeFor(position.zoom, position.position.latitude)
         val distanceForward = altitude * cos(tiltAbsRad) * tan(tiltAbsRad) * TARGET_DISTANCE_SCALE
-        val target = Spherical.computeOffset(position.position, distanceForward, CameraBearing.toNativeHeading(position.bearing))
+        val target =
+            Spherical
+                .computeOffset(position.position, distanceForward, CameraBearing.toNativeHeading(position.bearing))
         return target to zoom
     }
 
@@ -72,7 +74,11 @@ internal object OpenMobileMapsTiltEmulation {
         val tiltAbsRad = Math.toRadians(tiltAbsDeg)
         val altitude = altitudeFor(originalZoom, center.latitude)
         val distanceBackward = altitude * cos(tiltAbsRad) * tan(tiltAbsRad) * TARGET_DISTANCE_SCALE
-        val originalPosition: GeoPoint = Spherical.computeOffset(center, distanceBackward, CameraBearing.toNativeHeading(bearing) + 180.0)
+        val originalPosition: GeoPoint =
+            Spherical.computeOffset(
+                center, distanceBackward,
+                CameraBearing.toNativeHeading(bearing) + 180.0,
+            )
         return originalPosition to originalZoom
     }
 

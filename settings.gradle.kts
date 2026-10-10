@@ -42,4 +42,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "android-for-openmobilemaps"
-

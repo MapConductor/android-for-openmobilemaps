@@ -78,7 +78,6 @@ dependencies {
     testImplementation(libs.junit)
 }
 
-
 // Set project version for NMCP plugin
 version = libraryVersion
 val libraryName = "MapConductor for Open Mobile Maps"
@@ -86,9 +85,10 @@ val libraryDescription = "Open Mobile Maps implementation for MapConductor unifi
 
 // Gradle 9.6 で `by tasks.registering` は非推奨（スクリプトコンパイルエラーになる）。
 // googlemaps 等の既存モジュールは古い形のままなので、再コンパイル時に同じ問題が出る。
-val javadocJar = tasks.register<Jar>("javadocJar") {
-    archiveClassifier.set("javadoc")
-}
+val javadocJar =
+    tasks.register<Jar>("javadocJar") {
+        archiveClassifier.set("javadoc")
+    }
 
 afterEvaluate {
     publishing {
