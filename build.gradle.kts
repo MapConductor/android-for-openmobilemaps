@@ -64,8 +64,9 @@ dependencies {
     // Open Mobile Maps SDK
     api(libs.openmobilemaps.mapscore)
     // ローカルタイルサーバの 404 を 204 へ書き換えるインターセプタで使う
-    // （mapscore の transitive 依存と同じ版。DataLoader が okhttp3.Interceptor を受け取る）
-    implementation("com.squareup.okhttp3:okhttp:5.1.0")
+    // （DataLoader が okhttp3.Interceptor を受け取る。mapscore 4.0.0 の transitive は
+    //   5.1.0 だが、ここで版をカタログに寄せて明示的に引き上げている）
+    implementation(libs.okhttp)
 
     // 集約ビルド（android-sdk）ではプロジェクト参照、単体ビルド（CI のリリース）では
     // Maven 座標で解決する。他プロバイダと同じ形。
