@@ -674,6 +674,9 @@ class OpenMobileMapsRasterLayerOverlayRenderer(
                 // ラスターオーバーレイは透過前提なので、粗い親レベルを重ね描きしない
                 numDrawPreviousLayers = 0,
                 maskTile = true,
+                // 切り捨てだと、ズーム 17.75 で z17 を 1.68 倍に伸ばして出す。MapLibre 系は z18 を
+                // 0.84 倍で出すので、マーカータイルのアイコンとラベルが 2 倍違って見えた。
+                roundToNearestLevel = true,
             )
         val layer = Tiled2dMapRasterLayerInterface.create(config, loaders)
         layer.setAlpha(state.opacity)

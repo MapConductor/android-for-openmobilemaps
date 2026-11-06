@@ -35,6 +35,8 @@ import kotlin.math.pow
  * @param urlTemplate `{z}` `{x}` `{y}` を含む URL。
  * @param tileSize タイル 1 枚の一辺（**dp**）。OSM 系は 256、@2x 系は 512。
  * @param scheme [TileScheme.TMS] なら y を反転する。
+ * @param roundToNearestLevel true ならカメラのズームを四捨五入したレベルのタイルを出す
+ *   （MapLibre 系・Mapbox・HERE・ArcGIS と同じ）。false は OpenMobileMaps の既定どおり切り捨てる。
  */
 class WebMercatorTileLayerConfig(
     private val layerName: String,
@@ -45,6 +47,7 @@ class WebMercatorTileLayerConfig(
     private val scheme: TileScheme = TileScheme.XYZ,
     private val numDrawPreviousLayers: Int = 2,
     private val maskTile: Boolean = false,
+    private val roundToNearestLevel: Boolean = false,
 ) : Tiled2dMapLayerConfig() {
     override fun getCoordinateSystemIdentifier(): Int = CoordinateSystemIdentifiers.EPSG3857()
 
@@ -94,7 +97,8 @@ class WebMercatorTileLayerConfig(
 
     override fun getZoomInfo(): Tiled2dMapZoomInfo =
         Tiled2dMapZoomInfo(
-            1.0f,
+            // √2 で次のレベルへ半段早く切り替わり、切り捨てが四捨五入になる。
+            if (roundToNearestLevel) 1.4142135f else 1.0f,
             numDrawPreviousLayers,
             0,
             false,
