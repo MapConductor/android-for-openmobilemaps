@@ -19,6 +19,9 @@ import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.marker.dispatchGeoMarkerClick
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.polygon.PolygonTiler
+import com.mapconductor.core.polygon.polygonTileRasterLayerState
 import com.mapconductor.openmobilemaps.marker.OpenMobileMapsMarkerController
 import com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig
 import com.mapconductor.openmobilemaps.zoom.ZoomAltitudeConverter
@@ -164,6 +167,19 @@ class OpenMobileMapsMapViewController(
                     .forEach { rasterLayerController.removeById(it.state.id) }
             }
         }
+
+        // Many polygons are drawn as raster tiles, shown through the same RasterLayer
+        // controller as the marker tiles (upsert / removeById, never the app's layers).
+        polygonController.tiler =
+            PolygonTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polygonTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYGON_TILE_LAYER_ID)
+                    }
+                }
+            }
     }
 
     /** SDK のイベントをコアの受け口へ転送する。 */

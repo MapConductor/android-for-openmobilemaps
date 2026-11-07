@@ -475,13 +475,19 @@ class OpenMobileMapsPolygonOverlayRenderer(
     override suspend fun removePolygon(entity: PolygonEntityInterface<OpenMobileMapsActualPolygon>) = Unit
 
     override suspend fun onPostProcess() {
-        val entities = polygonManager.allEntities()
+        // Polygons drawn as tiles (PolygonController.tiler) stay in the manager
+        // for taps with no native polygon.
+        val entities = polygonManager.allEntities().mapNotNull { nativePolygonOf(it) }
         // add / addAll ではなく setPolygons を使うこと。4.0 の PolygonLayer は
         // 原点（第 2 引数）を持つようになっていて、setPolygons を一度も通っていない
         // レイヤに add すると**何も描かれない**（例外も警告も出ない）。
-        fillLayer.setPolygons(entities.flatMapTo(ArrayList()) { it.polygon.fills }, RENDER_ORIGIN)
-        outlineLayer.setLines(entities.flatMapTo(ArrayList()) { it.polygon.outlines })
+        fillLayer.setPolygons(entities.flatMapTo(ArrayList()) { it.fills }, RENDER_ORIGIN)
+        outlineLayer.setLines(entities.flatMapTo(ArrayList()) { it.outlines })
     }
+
+    @Suppress("USELESS_CAST")
+    private fun nativePolygonOf(entity: PolygonEntityInterface<OpenMobileMapsActualPolygon>): OpenMobileMapsActualPolygon? =
+        entity.polygon as OpenMobileMapsActualPolygon?
 }
 
 // ── 円 ────────────────────────────────────────────────────────────────────
