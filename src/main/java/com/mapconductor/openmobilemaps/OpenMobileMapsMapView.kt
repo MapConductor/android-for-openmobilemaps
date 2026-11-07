@@ -18,6 +18,7 @@ import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapViewState
+import com.mapconductor.core.map.MapViewStateBundle
 import com.mapconductor.core.map.MapViewStateInterface
 import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.map.MutableMapServiceRegistry
@@ -99,6 +100,7 @@ class OpenMobileMapsMapViewSaver : BaseMapViewSaver<OpenMobileMapsViewState>() {
         bundle.putString("id", state.mapDesignType.id)
         bundle.putString("tileUrlTemplate", state.mapDesignType.tileUrlTemplate)
         bundle.putInt("tileSize", state.mapDesignType.tileSize)
+        MapViewStateBundle.putAttributionRules(bundle, state.mapDesignType.attributionRules)
     }
 
     override fun createState(
@@ -115,6 +117,7 @@ class OpenMobileMapsMapViewSaver : BaseMapViewSaver<OpenMobileMapsViewState>() {
                         mapDesignBundle?.getString("tileUrlTemplate")
                             ?: OpenMobileMapsDesign.OpenStreetMap.tileUrlTemplate,
                     tileSize = mapDesignBundle?.getInt("tileSize")?.takeIf { it > 0 } ?: 256,
+                    attributionRules = MapViewStateBundle.getAttributionRules(mapDesignBundle),
                 ),
             cameraPosition = cameraPosition,
         )
