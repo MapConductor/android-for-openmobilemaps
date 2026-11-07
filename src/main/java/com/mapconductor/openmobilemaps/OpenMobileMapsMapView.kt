@@ -280,6 +280,16 @@ fun OpenMobileMapsMapView(
         },
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,
+        // registerLifecycle() put the MapView on the Activity's lifecycle, and
+        // its own onDestroy() does not take it off again: left there, the
+        // Activity keeps every map the user switched away from (and through
+        // its callbacks the controller with every overlay). Take it off first
+        // so the Activity's ON_DESTROY cannot destroy it a second time.
+        onDestroyMapView = { surface ->
+            lifecycleOwner.lifecycle.removeObserver(surface.mapView)
+            surface.mapView.onPause()
+            surface.mapView.onDestroy()
+        },
         content = content,
     )
 }
