@@ -393,6 +393,8 @@ class OpenMobileMapsMapViewController(
         groundImageController.clear()
         rasterLayerController.clear()
         layers.clearAll()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     // ── 地図デザイン ────────────────────────────────────────────────────
