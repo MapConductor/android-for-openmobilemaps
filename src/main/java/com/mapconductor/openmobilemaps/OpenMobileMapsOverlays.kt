@@ -406,7 +406,10 @@ class OpenMobileMapsPolylineOverlayRenderer(
     override suspend fun removePolyline(entity: PolylineEntityInterface<OpenMobileMapsActualPolyline>) = Unit
 
     override suspend fun onPostProcess() {
-        lineLayer.setLines(polylineManager.allEntities().flatMapTo(ArrayList()) { it.polyline.orEmpty() })
+        // 帯の中は zIndex の順（同じなら渡された順）。
+        lineLayer.setLines(
+            polylineManager.allEntities().sortedBy { it.state.zIndex }.flatMapTo(ArrayList()) { it.polyline.orEmpty() },
+        )
     }
 }
 
@@ -475,7 +478,8 @@ class OpenMobileMapsPolygonOverlayRenderer(
     override suspend fun removePolygon(entity: PolygonEntityInterface<OpenMobileMapsActualPolygon>) = Unit
 
     override suspend fun onPostProcess() {
-        val entities = polygonManager.allEntities()
+        // 帯の中は zIndex の順（同じなら渡された順）。
+        val entities = polygonManager.allEntities().sortedBy { it.state.zIndex }
         // add / addAll ではなく setPolygons を使うこと。4.0 の PolygonLayer は
         // 原点（第 2 引数）を持つようになっていて、setPolygons を一度も通っていない
         // レイヤに add すると**何も描かれない**（例外も警告も出ない）。
@@ -530,7 +534,7 @@ class OpenMobileMapsCircleOverlayRenderer(
     override suspend fun removeCircle(entity: CircleEntityInterface<OpenMobileMapsActualCircle>) = Unit
 
     override suspend fun onPostProcess() {
-        val entities = circleManager.allEntities()
+        val entities = circleManager.allEntities().sortedBy { it.state.zIndex ?: 0 }
         fillLayer.setPolygons(entities.flatMapTo(ArrayList()) { it.circle.fills }, RENDER_ORIGIN)
         outlineLayer.setLines(entities.flatMapTo(ArrayList()) { it.circle.outlines })
     }
@@ -583,7 +587,7 @@ class OpenMobileMapsGroundImageOverlayRenderer(
 
         return OpenMobileMapsActualGroundImage(
             layer = layer,
-            layerInterface = layers.insertBelowOverlays(holder.map, layer.asLayerInterface()),
+            layerInterface = layers.insertGroundImage(holder.map, layer.asLayerInterface()),
         )
     }
 
@@ -685,7 +689,13 @@ class OpenMobileMapsRasterLayerOverlayRenderer(
         }
         return OpenMobileMapsActualRasterLayer(
             layer = layer,
-            layerInterface = layers.insertBelowOverlays(holder.map, layer.asLayerInterface()),
+            layerInterface =
+                if (state.id.startsWith("marker-tile-")) {
+                    // マーカーのタイルはマーカーの帯（ポリラインの上）。
+                    layers.insertMarkerTile(holder.map, layer.asLayerInterface())
+                } else {
+                    layers.insertBelowOverlays(holder.map, layer.asLayerInterface())
+                },
         )
     }
 }
