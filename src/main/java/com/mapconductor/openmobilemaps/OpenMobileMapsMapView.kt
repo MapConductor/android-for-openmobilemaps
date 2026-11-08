@@ -64,7 +64,10 @@ class OpenMobileMapsViewState(
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
 ) : MapViewState<OpenMobileMapsMapDesignTypeInterface>(cameraPosition),
     OpenMobileMapsViewStateInterface {
-    private var controller: OpenMobileMapsMapViewController? = null
+    // Read through the base so that letting go of the controller there (MapViewBase
+    // does it when the map is torn down) leaves nothing behind here.
+    private val controller: OpenMobileMapsMapViewController?
+        get() = attachedMapController as? OpenMobileMapsMapViewController
     private var current: OpenMobileMapsMapDesignTypeInterface = mapDesignType
 
     override var mapDesignType: OpenMobileMapsMapDesignTypeInterface
@@ -75,7 +78,6 @@ class OpenMobileMapsViewState(
         }
 
     internal fun setController(controller: OpenMobileMapsMapViewController) {
-        this.controller = controller
         attachController(controller)
     }
 
