@@ -64,7 +64,10 @@ class OpenMobileMapsViewState(
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
 ) : MapViewState<OpenMobileMapsMapDesignTypeInterface>(cameraPosition),
     OpenMobileMapsViewStateInterface {
-    private var controller: OpenMobileMapsMapViewController? = null
+    // Read through the base so that letting go of the controller there (MapViewBase
+    // does it when the map is torn down) leaves nothing behind here.
+    private val controller: OpenMobileMapsMapViewController?
+        get() = attachedMapController as? OpenMobileMapsMapViewController
     private var current: OpenMobileMapsMapDesignTypeInterface = mapDesignType
 
     override var mapDesignType: OpenMobileMapsMapDesignTypeInterface
@@ -75,7 +78,6 @@ class OpenMobileMapsViewState(
         }
 
     internal fun setController(controller: OpenMobileMapsMapViewController) {
-        this.controller = controller
         attachController(controller)
     }
 
@@ -280,6 +282,16 @@ fun OpenMobileMapsMapView(
         },
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,
+        // registerLifecycle() put the MapView on the Activity's lifecycle, and
+        // its own onDestroy() does not take it off again: left there, the
+        // Activity keeps every map the user switched away from (and through
+        // its callbacks the controller with every overlay). Take it off first
+        // so the Activity's ON_DESTROY cannot destroy it a second time.
+        onDestroyMapView = { surface ->
+            lifecycleOwner.lifecycle.removeObserver(surface.mapView)
+            surface.mapView.onPause()
+            surface.mapView.onDestroy()
+        },
         content = content,
     )
 }

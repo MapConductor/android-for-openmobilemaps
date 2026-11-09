@@ -121,8 +121,12 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsGroundImageOver
 }
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public static final int DESIGN_INDEX;
+  public static final int RASTER_INDEX_FIRST;
   public static final int BELOW_INDEX_FIRST;
+  public static final int GROUND_IMAGE_INDEX_FIRST;
   public static final int FIXED_INDEX_FIRST;
+  public static final int MARKER_TILE_INDEX_FIRST;
+  public static final int ICON_INDEX;
   public com.mapconductor.openmobilemaps.OpenMobileMapsLayers();
   public final io.openmobilemaps.mapscore.shared.map.layers.polygon.PolygonLayerInterface getPolygonFillLayer();
   public final io.openmobilemaps.mapscore.shared.map.layers.line.LineLayerInterface getPolygonOutlineLayer();
@@ -133,8 +137,18 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public final void attachTo(io.openmobilemaps.mapscore.shared.map.MapInterface);
   public final void setDesignLayer(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertBelowOverlays(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertGroundImage(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertMarkerTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void remove(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void clearAll();
+}
+final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers$Band {
+  public final int getFirst();
+  public final int getEnd();
+  public final java.util.TreeSet<java.lang.Integer> getFree();
+  public final int getNext();
+  public final void setNext(int);
+  public final int take();
 }
 final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers$Companion {
 }

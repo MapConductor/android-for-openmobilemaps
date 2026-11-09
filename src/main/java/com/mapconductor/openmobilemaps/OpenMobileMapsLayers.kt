@@ -19,9 +19,14 @@ import io.openmobilemaps.mapscore.shared.map.layers.polygon.PolygonLayerInterfac
  * ## 重ね順（下から）
  *
  * ```
- * 地図デザイン → ラスターレイヤ・グラウンドイメージ → ポリゴン塗り → ポリゴン輪郭
+ * 地図デザイン → ラスターレイヤ・グラウンドイメージ → ポリゴンのタイル → ポリゴン塗り → ポリゴン輪郭
  *   → 円の塗り → 円の輪郭 → ポリライン → マーカー
  * ```
+ *
+ * すべてのプロバイダ共通の決まり（[com.mapconductor.core.controller.OverlayStacking]）。
+ * ラスターとグラウンドイメージ、ポリゴン・マーカーのタイルは数が変わるので、帯ごとに索引の区間を分けて
+ * 割り当てる（以前はラスターとグラウンドイメージが同じ区間を空き番号から使い回していたため、
+ * 追加・送り直しの順で上下が入れ替わった）。
  *
  * 他プロバイダのクリックのカスケード（marker → circle → groundImage → polyline →
  * polygon → map）と**上下が逆に見える**が、これは正しい。カスケードは「上にあるものから
@@ -56,18 +61,31 @@ class OpenMobileMapsLayers {
     /** 地図デザインとオーバーレイ群の間に入っているレイヤ（ラスター / グラウンドイメージ）と、その索引。 */
     private val belowOverlayIndices = mutableMapOf<LayerInterface, Int>()
 
-    /** 外したレイヤの索引。使い回さないと、タイルの張り替えを繰り返すうちに索引が尽きる。 */
-    private val freeBelowIndices = sortedSetOf<Int>()
-    private var nextBelowIndex = BELOW_INDEX_FIRST
+    /** 帯ごとの索引の割り当て。外したレイヤの索引は使い回す（張り替えを繰り返すうちに尽きないよう）。 */
+    private class Band(
+        val first: Int,
+        val end: Int,
+    ) {
+        val free = sortedSetOf<Int>()
+        var next = first
 
-    private val fixedLayers: List<LayerInterface> by lazy {
+        fun take(): Int = free.pollFirst() ?: next++.also { check(it < end) { "layer index band exhausted" } }
+    }
+
+    private val rasterBand = Band(RASTER_INDEX_FIRST, GROUND_IMAGE_INDEX_FIRST)
+    private val groundImageBand = Band(GROUND_IMAGE_INDEX_FIRST, POLYGON_TILE_INDEX_FIRST)
+    private val polygonTileBand = Band(POLYGON_TILE_INDEX_FIRST, FIXED_INDEX_FIRST)
+    private val markerTileBand = Band(MARKER_TILE_INDEX_FIRST, ICON_INDEX)
+    private val bandOfLayer = mutableMapOf<LayerInterface, Band>()
+
+    private val fixedLayers: List<Pair<LayerInterface, Int>> by lazy {
         listOf(
-            polygonFillLayer.asLayerInterface(),
-            polygonOutlineLayer.asLayerInterface(),
-            circleFillLayer.asLayerInterface(),
-            circleOutlineLayer.asLayerInterface(),
-            polylineLayer.asLayerInterface(),
-            iconLayer.asLayerInterface(),
+            polygonFillLayer.asLayerInterface() to FIXED_INDEX_FIRST,
+            polygonOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 1,
+            circleFillLayer.asLayerInterface() to FIXED_INDEX_FIRST + 2,
+            circleOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 3,
+            polylineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 4,
+            iconLayer.asLayerInterface() to ICON_INDEX,
         )
     }
 
@@ -90,8 +108,8 @@ class OpenMobileMapsLayers {
         polylineLayer.setLayerClickable(false)
         iconLayer.setLayerClickable(false)
 
-        fixedLayers.forEachIndexed { offset, layer ->
-            map.insertLayerAt(layer, FIXED_INDEX_FIRST + offset)
+        fixedLayers.forEach { (layer, index) ->
+            map.insertLayerAt(layer, index)
         }
     }
 
@@ -114,9 +132,34 @@ class OpenMobileMapsLayers {
     fun insertBelowOverlays(
         map: MapInterface,
         layer: LayerInterface,
+    ): LayerInterface = insertInBand(map, layer, rasterBand)
+
+    /** グラウンドイメージ: ラスターレイヤの上、ポリゴンの下。 */
+    fun insertGroundImage(
+        map: MapInterface,
+        layer: LayerInterface,
+    ): LayerInterface = insertInBand(map, layer, groundImageBand)
+
+    /** ポリゴンのタイル: ポリゴンの帯の一番下（グラウンドイメージの上、ポリゴン塗りの下）。 */
+    fun insertPolygonTile(
+        map: MapInterface,
+        layer: LayerInterface,
+    ): LayerInterface = insertInBand(map, layer, polygonTileBand)
+
+    /** マーカーのタイル: ポリラインの上、マーカー（アイコン）の下。 */
+    fun insertMarkerTile(
+        map: MapInterface,
+        layer: LayerInterface,
+    ): LayerInterface = insertInBand(map, layer, markerTileBand)
+
+    private fun insertInBand(
+        map: MapInterface,
+        layer: LayerInterface,
+        band: Band,
     ): LayerInterface {
-        val index = freeBelowIndices.pollFirst() ?: nextBelowIndex++
+        val index = band.take()
         belowOverlayIndices[layer] = index
+        bandOfLayer[layer] = band
         map.insertLayerAt(layer, index)
         return layer
     }
@@ -125,7 +168,9 @@ class OpenMobileMapsLayers {
         map: MapInterface,
         layer: LayerInterface,
     ) {
-        belowOverlayIndices.remove(layer)?.let { freeBelowIndices.add(it) }
+        val index = belowOverlayIndices.remove(layer)
+        val band = bandOfLayer.remove(layer)
+        if (index != null && band != null) band.free.add(index)
         map.removeLayer(layer)
     }
 
@@ -142,10 +187,26 @@ class OpenMobileMapsLayers {
         /** 地図デザイン。一番下。 */
         const val DESIGN_INDEX = 0
 
-        /** ラスターレイヤ・グラウンドイメージ。地図デザインとオーバーレイ群の間。 */
-        const val BELOW_INDEX_FIRST = 1
+        /** ラスターレイヤ。地図デザインの上。 */
+        const val RASTER_INDEX_FIRST = 1
+
+        /** 以前の名前（ラスターとグラウンドイメージが共用していた区間の先頭）。 */
+        @Suppress("unused")
+        const val BELOW_INDEX_FIRST = RASTER_INDEX_FIRST
+
+        /** グラウンドイメージ。ラスターの上、ポリゴンの下。 */
+        const val GROUND_IMAGE_INDEX_FIRST = 500
+
+        /** ポリゴンのタイル。グラウンドイメージの上、ポリゴン塗りの下。 */
+        const val POLYGON_TILE_INDEX_FIRST = 900
 
         /** 固定のオーバーレイ 6 種。下の枠を使い切らないよう十分離す。 */
         const val FIXED_INDEX_FIRST = 1_000
+
+        /** マーカーのタイル。ポリラインの上、マーカーの下。 */
+        const val MARKER_TILE_INDEX_FIRST = 1_100
+
+        /** マーカー（アイコン）。一番上。 */
+        const val ICON_INDEX = 2_000
     }
 }

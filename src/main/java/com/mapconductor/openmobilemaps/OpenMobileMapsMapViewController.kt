@@ -182,9 +182,17 @@ class OpenMobileMapsMapViewController(
             }
     }
 
+    /**
+     * 地図に挿したタッチリスナー。SDK はネイティブ側から JNI の global 参照で掴むので、
+     * [destroy] で外さないとこのコントローラ（と全オーバーレイ）がプロセスに残る。
+     */
+    private var touchListener: OpenMobileMapsTouchListener? = null
+
     /** SDK のイベントをコアの受け口へ転送する。 */
     fun installListeners() {
-        holder.map.getTouchHandler().insertListener(OpenMobileMapsTouchListener(this), 0)
+        val listener = OpenMobileMapsTouchListener(this)
+        touchListener = listener
+        holder.map.getTouchHandler().insertListener(listener, 0)
         holder.map.getCamera().addListener(cameraListener)
         notifyMapInitialized()
     }
@@ -401,6 +409,8 @@ class OpenMobileMapsMapViewController(
         groundImageController.clear()
         rasterLayerController.clear()
         layers.clearAll()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     // ── 地図デザイン ────────────────────────────────────────────────────
@@ -483,6 +493,8 @@ class OpenMobileMapsMapViewController(
     override fun destroy() {
         cancelCameraAnimation()
         runCatching { holder.map.getCamera().removeListener(cameraListener) }
+        touchListener?.let { listener -> runCatching { holder.map.getTouchHandler().removeListener(listener) } }
+        touchListener = null
         removeDragTouchInterceptor()
         super.destroy()
     }
