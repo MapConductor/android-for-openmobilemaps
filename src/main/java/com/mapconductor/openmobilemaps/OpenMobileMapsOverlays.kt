@@ -25,6 +25,7 @@ import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
 import com.mapconductor.core.polygon.PolygonController
 import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonManagerInterface
@@ -407,11 +408,18 @@ class OpenMobileMapsPolylineOverlayRenderer(
     override suspend fun removePolyline(entity: PolylineEntityInterface<OpenMobileMapsActualPolyline>) = Unit
 
     override suspend fun onPostProcess() {
-        // 帯の中は zIndex の順（同じなら渡された順）。
+        // 帯の中は zIndex の順（同じなら渡された順）。タイルで描く線（線の無い entity）は飛ばす。
         lineLayer.setLines(
-            polylineManager.allEntities().sortedBy { it.state.zIndex }.flatMapTo(ArrayList()) { it.polyline.orEmpty() },
+            polylineManager
+                .allEntities()
+                .sortedBy { it.state.zIndex }
+                .flatMapTo(ArrayList()) { nativePolylineOf(it).orEmpty() },
         )
     }
+
+    @Suppress("USELESS_CAST")
+    private fun nativePolylineOf(entity: PolylineEntityInterface<OpenMobileMapsActualPolyline>): OpenMobileMapsActualPolyline? =
+        entity.polyline as OpenMobileMapsActualPolyline?
 }
 
 // ── ポリゴン ──────────────────────────────────────────────────────────────
@@ -707,6 +715,9 @@ class OpenMobileMapsRasterLayerOverlayRenderer(
                 } else if (state.id == POLYGON_TILE_LAYER_ID) {
                     // ポリゴンのタイルはポリゴンの帯の一番下（画像になったポリゴンであって、地図の画像ではない）。
                     layers.insertPolygonTile(holder.map, layer.asLayerInterface())
+                } else if (state.id == POLYLINE_TILE_LAYER_ID) {
+                    // ポリラインのタイルはポリラインの帯の一番下（サークルの上、ネイティブのポリラインの下）。
+                    layers.insertPolylineTile(holder.map, layer.asLayerInterface())
                 } else {
                     layers.insertBelowOverlays(holder.map, layer.asLayerInterface())
                 },

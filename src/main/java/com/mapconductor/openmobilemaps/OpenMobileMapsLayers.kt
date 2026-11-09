@@ -75,6 +75,7 @@ class OpenMobileMapsLayers {
     private val rasterBand = Band(RASTER_INDEX_FIRST, GROUND_IMAGE_INDEX_FIRST)
     private val groundImageBand = Band(GROUND_IMAGE_INDEX_FIRST, POLYGON_TILE_INDEX_FIRST)
     private val polygonTileBand = Band(POLYGON_TILE_INDEX_FIRST, FIXED_INDEX_FIRST)
+    private val polylineTileBand = Band(POLYLINE_TILE_INDEX_FIRST, POLYLINE_INDEX)
     private val markerTileBand = Band(MARKER_TILE_INDEX_FIRST, ICON_INDEX)
     private val bandOfLayer = mutableMapOf<LayerInterface, Band>()
 
@@ -84,7 +85,7 @@ class OpenMobileMapsLayers {
             polygonOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 1,
             circleFillLayer.asLayerInterface() to FIXED_INDEX_FIRST + 2,
             circleOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 3,
-            polylineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 4,
+            polylineLayer.asLayerInterface() to POLYLINE_INDEX,
             iconLayer.asLayerInterface() to ICON_INDEX,
         )
     }
@@ -146,6 +147,12 @@ class OpenMobileMapsLayers {
         layer: LayerInterface,
     ): LayerInterface = insertInBand(map, layer, polygonTileBand)
 
+    /** ポリラインのタイル: ポリラインの帯の一番下（サークルの上、ネイティブのポリラインの下）。 */
+    fun insertPolylineTile(
+        map: MapInterface,
+        layer: LayerInterface,
+    ): LayerInterface = insertInBand(map, layer, polylineTileBand)
+
     /** マーカーのタイル: ポリラインの上、マーカー（アイコン）の下。 */
     fun insertMarkerTile(
         map: MapInterface,
@@ -202,6 +209,12 @@ class OpenMobileMapsLayers {
 
         /** 固定のオーバーレイ 6 種。下の枠を使い切らないよう十分離す。 */
         const val FIXED_INDEX_FIRST = 1_000
+
+        /** ポリラインのタイル。サークルの上、ネイティブのポリラインの下。 */
+        const val POLYLINE_TILE_INDEX_FIRST = FIXED_INDEX_FIRST + 10
+
+        /** ネイティブのポリライン（固定）。ポリラインのタイルの上。 */
+        const val POLYLINE_INDEX = FIXED_INDEX_FIRST + 50
 
         /** マーカーのタイル。ポリラインの上、マーカーの下。 */
         const val MARKER_TILE_INDEX_FIRST = 1_100
