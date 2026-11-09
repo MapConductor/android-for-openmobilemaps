@@ -124,6 +124,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public static final int RASTER_INDEX_FIRST;
   public static final int BELOW_INDEX_FIRST;
   public static final int GROUND_IMAGE_INDEX_FIRST;
+  public static final int POLYGON_TILE_INDEX_FIRST;
   public static final int FIXED_INDEX_FIRST;
   public static final int MARKER_TILE_INDEX_FIRST;
   public static final int ICON_INDEX;
@@ -138,6 +139,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public final void setDesignLayer(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertBelowOverlays(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertGroundImage(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolygonTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertMarkerTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void remove(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void clearAll();
@@ -353,6 +355,9 @@ public final class com.mapconductor.openmobilemaps.marker.OpenMobileMapsMarkerCo
   public java.lang.Object onCameraChanged(com.mapconductor.core.map.MapCameraPosition, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public void destroy();
   public java.lang.Object update(java.lang.Object, kotlin.coroutines.Continuation);
+}
+final class com.mapconductor.openmobilemaps.marker.OpenMobileMapsMarkerController$Companion {
+  public final long getTILE_REFRESH_COALESCE-UwyO8pc();
 }
 public final class com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig extends io.openmobilemaps.mapscore.shared.map.layers.tiled.Tiled2dMapLayerConfig {
   public static final double WORLD_WIDTH_METERS;
