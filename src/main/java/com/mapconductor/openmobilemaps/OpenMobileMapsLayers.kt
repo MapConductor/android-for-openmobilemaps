@@ -19,12 +19,12 @@ import io.openmobilemaps.mapscore.shared.map.layers.polygon.PolygonLayerInterfac
  * ## 重ね順（下から）
  *
  * ```
- * 地図デザイン → ラスターレイヤ・グラウンドイメージ → ポリゴン塗り → ポリゴン輪郭
+ * 地図デザイン → ラスターレイヤ・グラウンドイメージ → ポリゴンのタイル → ポリゴン塗り → ポリゴン輪郭
  *   → 円の塗り → 円の輪郭 → ポリライン → マーカー
  * ```
  *
  * すべてのプロバイダ共通の決まり（[com.mapconductor.core.controller.OverlayStacking]）。
- * ラスターとグラウンドイメージ、マーカーのタイルは数が変わるので、帯ごとに索引の区間を分けて
+ * ラスターとグラウンドイメージ、ポリゴン・マーカーのタイルは数が変わるので、帯ごとに索引の区間を分けて
  * 割り当てる（以前はラスターとグラウンドイメージが同じ区間を空き番号から使い回していたため、
  * 追加・送り直しの順で上下が入れ替わった）。
  *
@@ -73,7 +73,8 @@ class OpenMobileMapsLayers {
     }
 
     private val rasterBand = Band(RASTER_INDEX_FIRST, GROUND_IMAGE_INDEX_FIRST)
-    private val groundImageBand = Band(GROUND_IMAGE_INDEX_FIRST, FIXED_INDEX_FIRST)
+    private val groundImageBand = Band(GROUND_IMAGE_INDEX_FIRST, POLYGON_TILE_INDEX_FIRST)
+    private val polygonTileBand = Band(POLYGON_TILE_INDEX_FIRST, FIXED_INDEX_FIRST)
     private val markerTileBand = Band(MARKER_TILE_INDEX_FIRST, ICON_INDEX)
     private val bandOfLayer = mutableMapOf<LayerInterface, Band>()
 
@@ -139,6 +140,12 @@ class OpenMobileMapsLayers {
         layer: LayerInterface,
     ): LayerInterface = insertInBand(map, layer, groundImageBand)
 
+    /** ポリゴンのタイル: ポリゴンの帯の一番下（グラウンドイメージの上、ポリゴン塗りの下）。 */
+    fun insertPolygonTile(
+        map: MapInterface,
+        layer: LayerInterface,
+    ): LayerInterface = insertInBand(map, layer, polygonTileBand)
+
     /** マーカーのタイル: ポリラインの上、マーカー（アイコン）の下。 */
     fun insertMarkerTile(
         map: MapInterface,
@@ -189,6 +196,9 @@ class OpenMobileMapsLayers {
 
         /** グラウンドイメージ。ラスターの上、ポリゴンの下。 */
         const val GROUND_IMAGE_INDEX_FIRST = 500
+
+        /** ポリゴンのタイル。グラウンドイメージの上、ポリゴン塗りの下。 */
+        const val POLYGON_TILE_INDEX_FIRST = 900
 
         /** 固定のオーバーレイ 6 種。下の枠を使い切らないよう十分離す。 */
         const val FIXED_INDEX_FIRST = 1_000
