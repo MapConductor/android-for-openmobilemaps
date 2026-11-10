@@ -126,6 +126,8 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public static final int GROUND_IMAGE_INDEX_FIRST;
   public static final int POLYGON_TILE_INDEX_FIRST;
   public static final int FIXED_INDEX_FIRST;
+  public static final int POLYLINE_TILE_INDEX_FIRST;
+  public static final int POLYLINE_INDEX;
   public static final int MARKER_TILE_INDEX_FIRST;
   public static final int ICON_INDEX;
   public com.mapconductor.openmobilemaps.OpenMobileMapsLayers();
@@ -140,6 +142,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertBelowOverlays(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertGroundImage(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolygonTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolylineTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertMarkerTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void remove(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void clearAll();
