@@ -25,6 +25,7 @@ import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.circle.CIRCLE_TILE_LAYER_ID
 import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
 import com.mapconductor.core.polygon.PolygonController
 import com.mapconductor.core.polygon.PolygonEntityInterface
@@ -553,7 +554,8 @@ class OpenMobileMapsCircleOverlayRenderer(
     override suspend fun removeCircle(entity: CircleEntityInterface<OpenMobileMapsActualCircle>) = Unit
 
     override suspend fun onPostProcess() {
-        val entities = circleManager.allEntities().sortedBy { it.state.zIndex ?: 0 }
+        // Tiled circles have no native fill or outline handle.
+        val entities = circleManager.nativeEntities().sortedBy { it.state.zIndex ?: 0 }
         fillLayer.setPolygons(entities.flatMapTo(ArrayList()) { it.circle.fills }, RENDER_ORIGIN)
         outlineLayer.setLines(entities.flatMapTo(ArrayList()) { it.circle.outlines })
     }
@@ -715,6 +717,8 @@ class OpenMobileMapsRasterLayerOverlayRenderer(
                 } else if (state.id == POLYGON_TILE_LAYER_ID) {
                     // ポリゴンのタイルはポリゴンの帯の一番下（画像になったポリゴンであって、地図の画像ではない）。
                     layers.insertPolygonTile(holder.map, layer.asLayerInterface())
+                } else if (state.id == CIRCLE_TILE_LAYER_ID) {
+                    layers.insertCircleTile(holder.map, layer.asLayerInterface())
                 } else if (state.id == POLYLINE_TILE_LAYER_ID) {
                     // ポリラインのタイルはポリラインの帯の一番下（サークルの上、ネイティブのポリラインの下）。
                     layers.insertPolylineTile(holder.map, layer.asLayerInterface())
