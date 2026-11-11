@@ -75,6 +75,7 @@ class OpenMobileMapsLayers {
     private val rasterBand = Band(RASTER_INDEX_FIRST, GROUND_IMAGE_INDEX_FIRST)
     private val groundImageBand = Band(GROUND_IMAGE_INDEX_FIRST, POLYGON_TILE_INDEX_FIRST)
     private val polygonTileBand = Band(POLYGON_TILE_INDEX_FIRST, FIXED_INDEX_FIRST)
+    private val circleTileBand = Band(FIXED_INDEX_FIRST + 2, FIXED_INDEX_FIRST + 6)
     private val polylineTileBand = Band(POLYLINE_TILE_INDEX_FIRST, POLYLINE_INDEX)
     private val markerTileBand = Band(MARKER_TILE_INDEX_FIRST, ICON_INDEX)
     private val bandOfLayer = mutableMapOf<LayerInterface, Band>()
@@ -83,8 +84,8 @@ class OpenMobileMapsLayers {
         listOf(
             polygonFillLayer.asLayerInterface() to FIXED_INDEX_FIRST,
             polygonOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 1,
-            circleFillLayer.asLayerInterface() to FIXED_INDEX_FIRST + 2,
-            circleOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 3,
+            circleFillLayer.asLayerInterface() to FIXED_INDEX_FIRST + 6,
+            circleOutlineLayer.asLayerInterface() to FIXED_INDEX_FIRST + 7,
             polylineLayer.asLayerInterface() to POLYLINE_INDEX,
             iconLayer.asLayerInterface() to ICON_INDEX,
         )
@@ -148,6 +149,9 @@ class OpenMobileMapsLayers {
     ): LayerInterface = insertInBand(map, layer, polygonTileBand)
 
     /** ポリラインのタイル: ポリラインの帯の一番下（サークルの上、ネイティブのポリラインの下）。 */
+    fun insertCircleTile(map: MapInterface, layer: LayerInterface): LayerInterface =
+        insertInBand(map, layer, circleTileBand)
+
     fun insertPolylineTile(
         map: MapInterface,
         layer: LayerInterface,
