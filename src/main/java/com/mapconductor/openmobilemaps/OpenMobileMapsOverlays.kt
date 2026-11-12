@@ -20,6 +20,7 @@ import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.AbstractMarkerOverlayRenderer
 import com.mapconductor.core.marker.BitmapIcon
+import com.mapconductor.core.marker.MarkerDrawOrder
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -194,6 +195,11 @@ class OpenMobileMapsMarkerOverlayRenderer(
         applyIcons()
     }
 
+    // 地図が回ったら、今の向きで並べ直して流し直す。
+    override suspend fun applyDrawOrder(entities: List<MarkerEntityInterface<OpenMobileMapsActualMarker>>) {
+        applyIcons()
+    }
+
     override fun onDragSelectionChanged(
         previous: MarkerEntityInterface<OpenMobileMapsActualMarker>?,
         current: MarkerEntityInterface<OpenMobileMapsActualMarker>?,
@@ -212,13 +218,17 @@ class OpenMobileMapsMarkerOverlayRenderer(
      *
      * `tiling` が立っている entity は [com.mapconductor.core.marker.MarkerTileRenderer] が
      * ラスタータイルとして描くので、ここでは除く（除かないと同じマーカーが二重に出る）。
+     *
+     * アイコンレイヤはリストの後ろほど上に描くので、[MarkerDrawOrder] の小さい順に並べる
+     * （zIndex が大きいほど、同じなら画面で下ほど上）。マネージャの順（足した順）に任せない。
      */
     private fun applyIcons() {
         val icons =
             markerManager
                 .allEntities()
                 .asSequence()
-                .filter { !it.tiling && it.visible }
+                .filter { !it.tiling && it.visible && it.marker != null }
+                .sortedBy { drawOrderOf(it.state) }
                 .mapNotNull { it.marker }
                 .toCollection(ArrayList())
         iconLayer.setIcons(icons)
@@ -419,8 +429,9 @@ class OpenMobileMapsPolylineOverlayRenderer(
     }
 
     @Suppress("USELESS_CAST")
-    private fun nativePolylineOf(entity: PolylineEntityInterface<OpenMobileMapsActualPolyline>): OpenMobileMapsActualPolyline? =
-        entity.polyline as OpenMobileMapsActualPolyline?
+    private fun nativePolylineOf(
+        entity: PolylineEntityInterface<OpenMobileMapsActualPolyline>,
+    ): OpenMobileMapsActualPolyline? = entity.polyline as OpenMobileMapsActualPolyline?
 }
 
 // ── ポリゴン ──────────────────────────────────────────────────────────────
@@ -504,8 +515,9 @@ class OpenMobileMapsPolygonOverlayRenderer(
     }
 
     @Suppress("USELESS_CAST")
-    private fun nativePolygonOf(entity: PolygonEntityInterface<OpenMobileMapsActualPolygon>): OpenMobileMapsActualPolygon? =
-        entity.polygon as OpenMobileMapsActualPolygon?
+    private fun nativePolygonOf(
+        entity: PolygonEntityInterface<OpenMobileMapsActualPolygon>,
+    ): OpenMobileMapsActualPolygon? = entity.polygon as OpenMobileMapsActualPolygon?
 }
 
 // ── 円 ────────────────────────────────────────────────────────────────────
