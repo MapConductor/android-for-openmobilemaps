@@ -314,6 +314,9 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsTiltEmulation {
   public final kotlin.Pair<com.mapconductor.core.features.GeoPointInterface, java.lang.Double> shiftedCamera(com.mapconductor.core.map.MapCameraPosition);
   public final kotlin.Pair<com.mapconductor.core.features.GeoPointInterface, java.lang.Double> restoreLogicalCamera(com.mapconductor.core.features.GeoPointInterface, double, double, double);
 }
+public final class com.mapconductor.openmobilemaps.OpenMobileMapsTiltEmulationKt {
+  public static final double OPEN_MOBILE_MAPS_VERTICAL_FOV;
+}
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsTouchListener extends io.openmobilemaps.mapscore.map.util.SimpleTouchInterface {
   public com.mapconductor.openmobilemaps.OpenMobileMapsTouchListener(com.mapconductor.openmobilemaps.OpenMobileMapsMapViewController);
   public boolean onTouchDown(io.openmobilemaps.mapscore.shared.graphics.common.Vec2F);

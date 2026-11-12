@@ -8,8 +8,11 @@ import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.CameraBearing
+import com.mapconductor.core.map.CameraPaddingEmulation
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCapabilityStatus
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.map.VisibleRegion
@@ -105,6 +108,15 @@ class OpenMobileMapsMapViewController(
      * カメライベントが tilt = 0 で上書きし、Tilt ページが 1 フレームで元に戻る）。
      */
     private var logicalTilt: Double = 0.0
+
+    /**
+     * 今カメラに付いているパディング（dp）。
+     *
+     * SDK の `setPaddingLeft` などは使わない。付けた瞬間に画面がずれ、こちらで刻んでいる
+     * アニメーションにも載らないため。代わりにカメラ中心をずらして再現し
+     * （[CameraPaddingEmulation]）、読むときに元へ戻すためにここで覚えておく。
+     */
+    private var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
 
     /** 直近に適用した tilt。アイコンの引き伸ばしを毎フレーム付け直さないための番人。 */
     private var lastAppliedTilt: Double = 0.0
@@ -296,13 +308,25 @@ class OpenMobileMapsMapViewController(
         val (center, zoom) =
             OpenMobileMapsTiltEmulation.restoreLogicalCamera(rawCenter, rawZoom, bearing, logicalTilt)
 
-        return MapCameraPosition(position = center, zoom = zoom, bearing = bearing, tilt = logicalTilt)
+        return CameraPaddingEmulation.fromNativeCamera(
+            MapCameraPosition(position = center, zoom = zoom, bearing = bearing, tilt = logicalTilt),
+            cameraPaddings,
+            OPEN_MOBILE_MAPS_VERTICAL_FOV,
+            viewportHeightDp(),
+        )
+    }
+
+    /** 地図の高さ（dp）。 */
+    private fun viewportHeightDp(): Double {
+        val density = holder.mapView.resources.displayMetrics.density
+        return holder.mapView.height / density.toDouble()
     }
 
     private fun visibleRegion(): VisibleRegion? = holder.buildVisibleRegion()
 
     override fun moveCamera(position: MapCameraPosition) {
         cancelCameraAnimation()
+        position.paddings?.let { cameraPaddings = it }
         applyCamera(position)
     }
 
@@ -325,10 +349,14 @@ class OpenMobileMapsMapViewController(
     ) {
         cancelCameraAnimation()
         if (duration <= 0L) {
+            position.paddings?.let { cameraPaddings = it }
             applyCamera(position)
             return
         }
 
+        // 先に新しいパディングへ切り替えてから始点を読む。始点も新しいパディングで
+        // 表した位置になるので、最初のフレームで画面が跳ばない。
+        position.paddings?.let { cameraPaddings = it }
         val from = readLogicalCamera()
         cameraAnimationJob =
             mainCoroutine.launch {
@@ -382,7 +410,13 @@ class OpenMobileMapsMapViewController(
                 .forEach { it.onVisualTiltChanged() }
         }
 
-        val (center, zoom) = OpenMobileMapsTiltEmulation.shiftedCamera(position)
+        val native =
+            CameraPaddingEmulation.toNativeCamera(
+                position.copy(paddings = cameraPaddings),
+                OPEN_MOBILE_MAPS_VERTICAL_FOV,
+                viewportHeightDp(),
+            )
+        val (center, zoom) = OpenMobileMapsTiltEmulation.shiftedCamera(native)
         val camera = holder.map.getCamera()
         camera.moveToCenterPositionZoom(center.toOmmCoord(), ZOOM_CONVERTER.toNativeZoom(zoom), false)
         // 方位が変わっていないなら触らない。毎フレーム呼ぶと SDK 側で無駄な
