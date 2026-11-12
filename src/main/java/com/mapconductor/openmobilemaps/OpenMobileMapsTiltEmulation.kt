@@ -12,6 +12,14 @@ import kotlin.math.cos
 import kotlin.math.tan
 
 /**
+ * OpenMobileMaps のカメラの縦方向の視野角（度）。SDK のカメラは 2D なので、傾きは
+ * ビューを X 軸まわりに回して見せている（[OpenMobileMapsMapSurface]）。その遠近は
+ * ほとんど付かず、TB520FU で傾けたときの縦の間隔は cos(tilt) 倍と 0.3% 以内で
+ * 一致した。遠近なしの傾きとして 0 と表す。
+ */
+internal const val OPEN_MOBILE_MAPS_VERTICAL_FOV = 0.0
+
+/**
  * Open Mobile Maps の 2D カメラ向けの tilt 擬似表現。
  *
  * ## なぜ擬似表現なのか
