@@ -142,6 +142,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertBelowOverlays(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertGroundImage(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolygonTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertCircleTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolylineTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertMarkerTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void remove(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
@@ -219,6 +220,9 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsMapViewHolder i
   public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
   public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
+  public com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.core.features.GeoPointInterface);
+  public com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.core.projection.ProjectedPoint);
+  public com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem();
   public java.lang.Object getMapView();
   public java.lang.Object getMap();
 }
