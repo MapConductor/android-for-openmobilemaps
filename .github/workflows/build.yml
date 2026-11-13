@@ -38,8 +38,29 @@ jobs:
           cache: 'gradle'
 
       - name: Build core and compose locally
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          git clone --depth 1 https://github.com/MapConductor/android-sdk-core.git _core
+          # コア側に PR と同名のブランチがあるなら、そちらを組む。
+          #
+          # ここを default ブランチ固定にしていると、**コアの未マージな変更に追随する
+          # PR は永久に赤いまま**になる。実際 CameraBearing をコアへ足したとき、
+          # プロバイダ側の PR が 10 本まとめて Unresolved reference で落ちた。
+          # コアが先にマージされるまで待つ、という運用は取り込み順の事故を呼ぶので、
+          # 同名ブランチがあれば拾う形にしてある（無ければ従来どおり default）。
+          clone_matching() {
+            repo="$1"; dir="$2"
+            url="https://github.com/MapConductor/$repo.git"
+            if [ -n "$HEAD_REF" ] && git ls-remote --exit-code --heads "$url" "$HEAD_REF" >/dev/null 2>&1; then
+              echo "$repo: matching branch $HEAD_REF"
+              git clone --depth 1 --branch "$HEAD_REF" "$url" "$dir"
+            else
+              echo "$repo: default branch"
+              git clone --depth 1 "$url" "$dir"
+            fi
+          }
+
+          clone_matching android-sdk-core _core
           cd _core
           ./gradlew --no-daemon publishToMavenLocal
           cd ..
@@ -53,7 +74,7 @@ jobs:
           }
           EOF
 
-          git clone --depth 1 https://github.com/MapConductor/android-sdk-compose.git _compose
+          clone_matching android-sdk-compose _compose
           cd _compose
           ./gradlew --no-daemon publishToMavenLocal
           cd ..

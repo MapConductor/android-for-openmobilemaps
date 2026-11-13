@@ -94,6 +94,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsDesign implemen
   public java.lang.Object getValue();
 }
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsDesign$Companion {
+  public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getNone();
   public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getOpenStreetMap();
   public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getOpenStreetMapJapan();
   public final com.mapconductor.openmobilemaps.OpenMobileMapsDesign getOpenTopoMap();
@@ -120,8 +121,15 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsGroundImageOver
 }
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public static final int DESIGN_INDEX;
+  public static final int RASTER_INDEX_FIRST;
   public static final int BELOW_INDEX_FIRST;
+  public static final int GROUND_IMAGE_INDEX_FIRST;
+  public static final int POLYGON_TILE_INDEX_FIRST;
   public static final int FIXED_INDEX_FIRST;
+  public static final int POLYLINE_TILE_INDEX_FIRST;
+  public static final int POLYLINE_INDEX;
+  public static final int MARKER_TILE_INDEX_FIRST;
+  public static final int ICON_INDEX;
   public com.mapconductor.openmobilemaps.OpenMobileMapsLayers();
   public final io.openmobilemaps.mapscore.shared.map.layers.polygon.PolygonLayerInterface getPolygonFillLayer();
   public final io.openmobilemaps.mapscore.shared.map.layers.line.LineLayerInterface getPolygonOutlineLayer();
@@ -132,8 +140,21 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers {
   public final void attachTo(io.openmobilemaps.mapscore.shared.map.MapInterface);
   public final void setDesignLayer(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertBelowOverlays(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertGroundImage(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolygonTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertCircleTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertPolylineTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
+  public final io.openmobilemaps.mapscore.shared.map.LayerInterface insertMarkerTile(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void remove(io.openmobilemaps.mapscore.shared.map.MapInterface, io.openmobilemaps.mapscore.shared.map.LayerInterface);
   public final void clearAll();
+}
+final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers$Band {
+  public final int getFirst();
+  public final int getEnd();
+  public final java.util.TreeSet<java.lang.Integer> getFree();
+  public final int getNext();
+  public final void setNext(int);
+  public final int take();
 }
 final class com.mapconductor.openmobilemaps.OpenMobileMapsLayers$Companion {
 }
@@ -199,12 +220,15 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsMapViewHolder i
   public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
   public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
+  public com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.core.features.GeoPointInterface);
+  public com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.core.projection.ProjectedPoint);
+  public com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem();
   public java.lang.Object getMapView();
   public java.lang.Object getMap();
 }
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsMapViewKt {
   public static final com.mapconductor.openmobilemaps.OpenMobileMapsViewState rememberOpenMobileMapsMapViewState(com.mapconductor.openmobilemaps.OpenMobileMapsMapDesignTypeInterface, com.mapconductor.core.map.MapCameraPositionInterface, androidx.compose.runtime.Composer, int, int);
-  public static final void OpenMobileMapsMapView(com.mapconductor.openmobilemaps.OpenMobileMapsViewState, androidx.compose.ui.Modifier, com.mapconductor.core.marker.MarkerTilingOptions, com.mapconductor.core.map.CameraRestriction, kotlin.jvm.functions.Function2<? super android.content.Context, ? super kotlin.coroutines.Continuation<? super java.lang.Boolean>, ? extends java.lang.Object>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapViewStateInterface<?>, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function3<? super com.mapconductor.openmobilemaps.OpenMobileMapsMapViewScope, ? super androidx.compose.runtime.Composer, ? super java.lang.Integer, kotlin.Unit>, androidx.compose.runtime.Composer, int, int, int);
+  public static final void OpenMobileMapsMapView(com.mapconductor.openmobilemaps.OpenMobileMapsViewState, androidx.compose.ui.Modifier, com.mapconductor.core.marker.MarkerTilingOptions, com.mapconductor.core.map.CameraRestriction, kotlin.jvm.functions.Function2<? super android.content.Context, ? super kotlin.coroutines.Continuation<? super java.lang.Boolean>, ? extends java.lang.Object>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapViewStateInterface<?>, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, com.mapconductor.core.map.MapViewStyle, kotlin.jvm.functions.Function1<? super java.util.List<java.lang.String>, kotlin.Unit>, kotlin.jvm.functions.Function3<? super com.mapconductor.openmobilemaps.OpenMobileMapsMapViewScope, ? super androidx.compose.runtime.Composer, ? super java.lang.Integer, kotlin.Unit>, androidx.compose.runtime.Composer, int, int, int);
   public static final com.mapconductor.openmobilemaps.OpenMobileMapsMapViewController createOpenMobileMapsViewController(com.mapconductor.openmobilemaps.OpenMobileMapsMapViewHolder, java.util.ArrayList<io.openmobilemaps.mapscore.shared.map.loader.LoaderInterface>, float, com.mapconductor.core.marker.MarkerTilingOptions, com.mapconductor.core.map.MutableMapServiceRegistry);
 }
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsMapViewSaver extends com.mapconductor.compose.map.BaseMapViewSaver<com.mapconductor.openmobilemaps.OpenMobileMapsViewState> {
@@ -231,6 +255,7 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsMarkerOverlayRe
   public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$ChangeParamsInterface<io.openmobilemaps.mapscore.shared.map.layers.icon.IconInfoInterface>>, kotlin.coroutines.Continuation<? super java.util.List<? extends io.openmobilemaps.mapscore.shared.map.layers.icon.IconInfoInterface>>);
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<io.openmobilemaps.mapscore.shared.map.layers.icon.IconInfoInterface>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  protected java.lang.Object applyDrawOrder(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<io.openmobilemaps.mapscore.shared.map.layers.icon.IconInfoInterface>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public void onDragSelectionChanged(com.mapconductor.core.marker.MarkerEntityInterface<io.openmobilemaps.mapscore.shared.map.layers.icon.IconInfoInterface>, com.mapconductor.core.marker.MarkerEntityInterface<io.openmobilemaps.mapscore.shared.map.layers.icon.IconInfoInterface>);
   public void onDragPositionChanged(com.mapconductor.core.features.GeoPointInterface);
   public final void onVisualTiltChanged();
@@ -294,6 +319,9 @@ public final class com.mapconductor.openmobilemaps.OpenMobileMapsTiltEmulation {
   public final kotlin.Pair<com.mapconductor.core.features.GeoPointInterface, java.lang.Double> shiftedCamera(com.mapconductor.core.map.MapCameraPosition);
   public final kotlin.Pair<com.mapconductor.core.features.GeoPointInterface, java.lang.Double> restoreLogicalCamera(com.mapconductor.core.features.GeoPointInterface, double, double, double);
 }
+public final class com.mapconductor.openmobilemaps.OpenMobileMapsTiltEmulationKt {
+  public static final double OPEN_MOBILE_MAPS_VERTICAL_FOV;
+}
 public final class com.mapconductor.openmobilemaps.OpenMobileMapsTouchListener extends io.openmobilemaps.mapscore.map.util.SimpleTouchInterface {
   public com.mapconductor.openmobilemaps.OpenMobileMapsTouchListener(com.mapconductor.openmobilemaps.OpenMobileMapsMapViewController);
   public boolean onTouchDown(io.openmobilemaps.mapscore.shared.graphics.common.Vec2F);
@@ -339,11 +367,14 @@ public final class com.mapconductor.openmobilemaps.marker.OpenMobileMapsMarkerCo
   public void destroy();
   public java.lang.Object update(java.lang.Object, kotlin.coroutines.Continuation);
 }
+final class com.mapconductor.openmobilemaps.marker.OpenMobileMapsMarkerController$Companion {
+  public final long getTILE_REFRESH_COALESCE-UwyO8pc();
+}
 public final class com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig extends io.openmobilemaps.mapscore.shared.map.layers.tiled.Tiled2dMapLayerConfig {
   public static final double WORLD_WIDTH_METERS;
   public static final double HALF_WORLD;
-  public com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig(java.lang.String, java.lang.String, int, int, int, com.mapconductor.core.raster.TileScheme, int, boolean);
-  public com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig(java.lang.String, java.lang.String, int, int, int, com.mapconductor.core.raster.TileScheme, int, boolean, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig(java.lang.String, java.lang.String, int, int, int, com.mapconductor.core.raster.TileScheme, int, boolean, boolean);
+  public com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig(java.lang.String, java.lang.String, int, int, int, com.mapconductor.core.raster.TileScheme, int, boolean, boolean, int, kotlin.jvm.internal.DefaultConstructorMarker);
   public int getCoordinateSystemIdentifier();
   public java.lang.String getLayerName();
   public java.lang.String getTileUrl(int, int, int, int);

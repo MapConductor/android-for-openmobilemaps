@@ -18,7 +18,9 @@ import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapViewState
+import com.mapconductor.core.map.MapViewStateBundle
 import com.mapconductor.core.map.MapViewStateInterface
+import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerManager
@@ -62,7 +64,10 @@ class OpenMobileMapsViewState(
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
 ) : MapViewState<OpenMobileMapsMapDesignTypeInterface>(cameraPosition),
     OpenMobileMapsViewStateInterface {
-    private var controller: OpenMobileMapsMapViewController? = null
+    // Read through the base so that letting go of the controller there (MapViewBase
+    // does it when the map is torn down) leaves nothing behind here.
+    private val controller: OpenMobileMapsMapViewController?
+        get() = attachedMapController as? OpenMobileMapsMapViewController
     private var current: OpenMobileMapsMapDesignTypeInterface = mapDesignType
 
     override var mapDesignType: OpenMobileMapsMapDesignTypeInterface
@@ -73,7 +78,6 @@ class OpenMobileMapsViewState(
         }
 
     internal fun setController(controller: OpenMobileMapsMapViewController) {
-        this.controller = controller
         attachController(controller)
     }
 
@@ -98,6 +102,7 @@ class OpenMobileMapsMapViewSaver : BaseMapViewSaver<OpenMobileMapsViewState>() {
         bundle.putString("id", state.mapDesignType.id)
         bundle.putString("tileUrlTemplate", state.mapDesignType.tileUrlTemplate)
         bundle.putInt("tileSize", state.mapDesignType.tileSize)
+        MapViewStateBundle.putAttributionRules(bundle, state.mapDesignType.attributionRules)
     }
 
     override fun createState(
@@ -114,6 +119,7 @@ class OpenMobileMapsMapViewSaver : BaseMapViewSaver<OpenMobileMapsViewState>() {
                         mapDesignBundle?.getString("tileUrlTemplate")
                             ?: OpenMobileMapsDesign.OpenStreetMap.tileUrlTemplate,
                     tileSize = mapDesignBundle?.getInt("tileSize")?.takeIf { it > 0 } ?: 256,
+                    attributionRules = MapViewStateBundle.getAttributionRules(mapDesignBundle),
                 ),
             cameraPosition = cameraPosition,
         )
@@ -162,6 +168,15 @@ fun OpenMobileMapsMapView(
     onCameraMoveStart: OnCameraMoveHandler? = null,
     onCameraMove: OnCameraMoveHandler? = null,
     onCameraMoveEnd: OnCameraMoveHandler? = null,
+    /**
+     * How the map looks, when the app states it rather than naming a design.
+     *
+     * A vector style *is* the basemap. `com.mapconductor:vectorstyle` builds
+     * one; what happens underneath depends on this backend and the app does
+     * not have to know.
+     */
+    style: MapViewStyle? = null,
+    onStyleDiagnostics: ((List<String>) -> Unit)? = null,
     content: (@Composable OpenMobileMapsMapViewScope.() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -264,6 +279,18 @@ fun OpenMobileMapsMapView(
                 MapsCore.initialize()
                 true
             }
+        },
+        style = style,
+        onStyleDiagnostics = onStyleDiagnostics,
+        // registerLifecycle() put the MapView on the Activity's lifecycle, and
+        // its own onDestroy() does not take it off again: left there, the
+        // Activity keeps every map the user switched away from (and through
+        // its callbacks the controller with every overlay). Take it off first
+        // so the Activity's ON_DESTROY cannot destroy it a second time.
+        onDestroyMapView = { surface ->
+            lifecycleOwner.lifecycle.removeObserver(surface.mapView)
+            surface.mapView.onPause()
+            surface.mapView.onDestroy()
         },
         content = content,
     )

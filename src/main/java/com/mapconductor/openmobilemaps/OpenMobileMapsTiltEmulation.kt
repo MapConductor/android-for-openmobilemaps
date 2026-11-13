@@ -2,6 +2,7 @@ package com.mapconductor.openmobilemaps
 
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.spherical.Spherical
 import com.mapconductor.core.zoom.AbstractZoomAltitudeConverter
@@ -9,6 +10,14 @@ import com.mapconductor.openmobilemaps.zoom.ZoomAltitudeConverter
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.tan
+
+/**
+ * OpenMobileMaps のカメラの縦方向の視野角（度）。SDK のカメラは 2D なので、傾きは
+ * ビューを X 軸まわりに回して見せている（[OpenMobileMapsMapSurface]）。その遠近は
+ * ほとんど付かず、TB520FU で傾けたときの縦の間隔は cos(tilt) 倍と 0.3% 以内で
+ * 一致した。遠近なしの傾きとして 0 と表す。
+ */
+internal const val OPEN_MOBILE_MAPS_VERTICAL_FOV = 0.0
 
 /**
  * Open Mobile Maps の 2D カメラ向けの tilt 擬似表現。
@@ -53,7 +62,9 @@ internal object OpenMobileMapsTiltEmulation {
         val tiltAbsRad = Math.toRadians(tiltAbsDeg)
         val altitude = altitudeFor(position.zoom, position.position.latitude)
         val distanceForward = altitude * cos(tiltAbsRad) * tan(tiltAbsRad) * TARGET_DISTANCE_SCALE
-        val target = Spherical.computeOffset(position.position, distanceForward, position.bearing)
+        val target =
+            Spherical
+                .computeOffset(position.position, distanceForward, CameraBearing.toNativeHeading(position.bearing))
         return target to zoom
     }
 
@@ -71,7 +82,11 @@ internal object OpenMobileMapsTiltEmulation {
         val tiltAbsRad = Math.toRadians(tiltAbsDeg)
         val altitude = altitudeFor(originalZoom, center.latitude)
         val distanceBackward = altitude * cos(tiltAbsRad) * tan(tiltAbsRad) * TARGET_DISTANCE_SCALE
-        val originalPosition: GeoPoint = Spherical.computeOffset(center, distanceBackward, bearing + 180.0)
+        val originalPosition: GeoPoint =
+            Spherical.computeOffset(
+                center, distanceBackward,
+                CameraBearing.toNativeHeading(bearing) + 180.0,
+            )
         return originalPosition to originalZoom
     }
 

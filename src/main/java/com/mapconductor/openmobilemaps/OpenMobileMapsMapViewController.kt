@@ -1,11 +1,18 @@
 package com.mapconductor.openmobilemaps
 
+import com.mapconductor.core.circle.CIRCLE_TILE_LAYER_ID
+import com.mapconductor.core.circle.CircleTiler
+import com.mapconductor.core.circle.circleTileRasterLayerState
 import com.mapconductor.core.controller.BaseMapViewController
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
+import com.mapconductor.core.map.CameraBearing
+import com.mapconductor.core.map.CameraPaddingEmulation
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCapabilityStatus
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.map.VisibleRegion
@@ -18,6 +25,12 @@ import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.marker.dispatchGeoMarkerClick
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.polygon.PolygonTiler
+import com.mapconductor.core.polygon.polygonTileRasterLayerState
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
+import com.mapconductor.core.polyline.PolylineTiler
+import com.mapconductor.core.polyline.polylineTileRasterLayerState
 import com.mapconductor.openmobilemaps.marker.OpenMobileMapsMarkerController
 import com.mapconductor.openmobilemaps.tile.WebMercatorTileLayerConfig
 import com.mapconductor.openmobilemaps.zoom.ZoomAltitudeConverter
@@ -96,6 +109,15 @@ class OpenMobileMapsMapViewController(
      */
     private var logicalTilt: Double = 0.0
 
+    /**
+     * 今カメラに付いているパディング（dp）。
+     *
+     * SDK の `setPaddingLeft` などは使わない。付けた瞬間に画面がずれ、こちらで刻んでいる
+     * アニメーションにも載らないため。代わりにカメラ中心をずらして再現し
+     * （[CameraPaddingEmulation]）、読むときに元へ戻すためにここで覚えておく。
+     */
+    private var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
+
     /** 直近に適用した tilt。アイコンの引き伸ばしを毎フレーム付け直さないための番人。 */
     private var lastAppliedTilt: Double = 0.0
 
@@ -163,11 +185,54 @@ class OpenMobileMapsMapViewController(
                     .forEach { rasterLayerController.removeById(it.state.id) }
             }
         }
+
+        // Many polygons are drawn as raster tiles, shown through the same RasterLayer
+        // controller as the marker tiles (upsert / removeById, never the app's layers).
+        polygonController.tiler =
+            PolygonTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polygonTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYGON_TILE_LAYER_ID)
+                    }
+                }
+            }
+
+        // Many polylines too: the same raster layer path, in the polyline band.
+        polylineController.tiler =
+            PolylineTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polylineTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYLINE_TILE_LAYER_ID)
+                    }
+                }
+            }
+        circleController.tiler =
+            CircleTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(circleTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(CIRCLE_TILE_LAYER_ID)
+                    }
+                }
+            }
     }
+
+    /**
+     * 地図に挿したタッチリスナー。SDK はネイティブ側から JNI の global 参照で掴むので、
+     * [destroy] で外さないとこのコントローラ（と全オーバーレイ）がプロセスに残る。
+     */
+    private var touchListener: OpenMobileMapsTouchListener? = null
 
     /** SDK のイベントをコアの受け口へ転送する。 */
     fun installListeners() {
-        holder.map.getTouchHandler().insertListener(OpenMobileMapsTouchListener(this), 0)
+        val listener = OpenMobileMapsTouchListener(this)
+        touchListener = listener
+        holder.map.getTouchHandler().insertListener(listener, 0)
         holder.map.getCamera().addListener(cameraListener)
         notifyMapInitialized()
     }
@@ -243,13 +308,25 @@ class OpenMobileMapsMapViewController(
         val (center, zoom) =
             OpenMobileMapsTiltEmulation.restoreLogicalCamera(rawCenter, rawZoom, bearing, logicalTilt)
 
-        return MapCameraPosition(position = center, zoom = zoom, bearing = bearing, tilt = logicalTilt)
+        return CameraPaddingEmulation.fromNativeCamera(
+            MapCameraPosition(position = center, zoom = zoom, bearing = bearing, tilt = logicalTilt),
+            cameraPaddings,
+            OPEN_MOBILE_MAPS_VERTICAL_FOV,
+            viewportHeightDp(),
+        )
+    }
+
+    /** 地図の高さ（dp）。 */
+    private fun viewportHeightDp(): Double {
+        val density = holder.mapView.resources.displayMetrics.density
+        return holder.mapView.height / density.toDouble()
     }
 
     private fun visibleRegion(): VisibleRegion? = holder.buildVisibleRegion()
 
     override fun moveCamera(position: MapCameraPosition) {
         cancelCameraAnimation()
+        position.paddings?.let { cameraPaddings = it }
         applyCamera(position)
     }
 
@@ -272,10 +349,14 @@ class OpenMobileMapsMapViewController(
     ) {
         cancelCameraAnimation()
         if (duration <= 0L) {
+            position.paddings?.let { cameraPaddings = it }
             applyCamera(position)
             return
         }
 
+        // 先に新しいパディングへ切り替えてから始点を読む。始点も新しいパディングで
+        // 表した位置になるので、最初のフレームで画面が跳ばない。
+        position.paddings?.let { cameraPaddings = it }
         val from = readLogicalCamera()
         cameraAnimationJob =
             mainCoroutine.launch {
@@ -329,7 +410,13 @@ class OpenMobileMapsMapViewController(
                 .forEach { it.onVisualTiltChanged() }
         }
 
-        val (center, zoom) = OpenMobileMapsTiltEmulation.shiftedCamera(position)
+        val native =
+            CameraPaddingEmulation.toNativeCamera(
+                position.copy(paddings = cameraPaddings),
+                OPEN_MOBILE_MAPS_VERTICAL_FOV,
+                viewportHeightDp(),
+            )
+        val (center, zoom) = OpenMobileMapsTiltEmulation.shiftedCamera(native)
         val camera = holder.map.getCamera()
         camera.moveToCenterPositionZoom(center.toOmmCoord(), ZOOM_CONVERTER.toNativeZoom(zoom), false)
         // 方位が変わっていないなら触らない。毎フレーム呼ぶと SDK 側で無駄な
@@ -384,6 +471,8 @@ class OpenMobileMapsMapViewController(
         groundImageController.clear()
         rasterLayerController.clear()
         layers.clearAll()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     // ── 地図デザイン ────────────────────────────────────────────────────
@@ -391,6 +480,12 @@ class OpenMobileMapsMapViewController(
     fun setMapDesignType(value: OpenMobileMapsMapDesignTypeInterface) {
         if (currentDesign?.getValue() == value.getValue()) return
         currentDesign = value
+        // テンプレートが無ければレイヤも無し: 何も描かないデザイン。
+        if (value.tileUrlTemplate.isEmpty()) {
+            layers.setDesignLayer(holder.map, null)
+            mapDesignTypeChangeListener?.invoke(value)
+            return
+        }
         val config =
             WebMercatorTileLayerConfig(
                 layerName = "design-${value.id}",
@@ -460,6 +555,8 @@ class OpenMobileMapsMapViewController(
     override fun destroy() {
         cancelCameraAnimation()
         runCatching { holder.map.getCamera().removeListener(cameraListener) }
+        touchListener?.let { listener -> runCatching { holder.map.getTouchHandler().removeListener(listener) } }
+        touchListener = null
         removeDragTouchInterceptor()
         super.destroy()
     }
@@ -475,20 +572,20 @@ class OpenMobileMapsMapViewController(
 
     companion object {
         /**
-         * 方位の符号。**SDK は MapConductor と逆回りである。**
+         * 方位の符号。**SDK の `setRotation` は MapConductor の bearing と同じ向き**
+         * （どちらも「地図を時計回りに回す量」）なので、変換は恒等になる。
          *
-         * MapConductor の bearing は Google 準拠で「カメラが向いている方位を北から時計回りに測る」。
-         * SDK の `setRotation` は地図を反時計回りに回す量なので、符号を反転する。
-         * 反転を忘れると bearing 270 の地図が 90 として描かれ、**ちょうど 180 度ずれる**
-         * （tilt ページを MapLibre と並べて気づいた。単独で見ると「回っている」ので正しく見える）。
+         * ここは机上ではなく端末で決めた値である。基準は「MapLibre と並べて同じ向きに
+         * 描かれること」で、MapLibre 側が heading 系（bearing の符号反転）に変わったのに
+         * 合わせてこちらも反転させてある。**符号を触ったら必ず tilt ページを MapLibre と
+         * 並べて確認すること。** 単独で見ると「回っている」ので正しく見えてしまう。
          */
-        internal fun nativeRotationFromBearing(bearing: Double): Float = (-bearing).toFloat()
+        internal fun nativeRotationFromBearing(bearing: Double): Float =
+            CameraBearing.toNativeRotation(bearing).toFloat()
 
         /** SDK の回転角 → MapConductor の bearing（0 以上 360 未満）。 */
-        internal fun bearingFromNativeRotation(rotation: Float): Double {
-            val bearing = -rotation.toDouble() % 360.0
-            return if (bearing < 0) bearing + 360.0 else bearing
-        }
+        internal fun bearingFromNativeRotation(rotation: Float): Double =
+            CameraBearing.bearingFromNativeRotation(rotation.toDouble())
 
         /**
          * ズームの往復換算。
